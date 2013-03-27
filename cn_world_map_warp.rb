@@ -6,6 +6,7 @@
 #    Version Date         Author           Comment
 #    0.9     17/03/2013   CrokNoks         Beta version for LePalaisDuMaking
 #    0.9.1   18/03/2013   CrokNoks         Add : disable the command in the menu
+#    0.9.2   27/03/2013   CrokNoks         Add : enable/disable teleportation to a specific location
 #
 # Licence: Utilisation non-commercial uniquement.
 # Me demandez avant de faire des modifications et avant de partager.
@@ -56,6 +57,8 @@ Voici une jolie description.
   bool : true/false
  Pour appeller la vue : 
   SceneManager.call(Scene_WorldMap)
+ Pour activer/désactiver la téléportation vers un lieu connu : 
+  $game_wmw.teleport(map_id,bool)
 =end
 module CN_WorldMapWarp
 	module Config 
@@ -180,6 +183,14 @@ class  Game_WMW
   def known(map_id,know)
     item = get(map_id)
     item.known = know unless item.nil?
+  end 
+  
+	#--------------------------------------------------------------------------
+  # * Set known value for id
+	#--------------------------------------------------------------------------
+  def teleport(map_id,teleport)
+    item = get(map_id)
+    item.teleport = teleport unless item.nil?
   end
   
 	#--------------------------------------------------------------------------
@@ -279,7 +290,7 @@ class  Game_WMW
     color = CN_WorldMapWarp::Config::PREVIOUS_LOC_TEXT_COLOR if location.map_id == @prev_map
     color = CN_WorldMapWarp::Config::CURRENT_LOC_TEXT_COLOR if b_selected_map
     
-    enabled = location.known
+    enabled = location.known && location.teleport
     enabled = false if color == CN_WorldMapWarp::Config::PREVIOUS_LOC_TEXT_COLOR
     
 		return {:color => text_color(color), :enabled => enabled}
@@ -387,8 +398,9 @@ class Window_Map < Window_Command
 	#--------------------------------------------------------------------------
   # * teleport player
 	#--------------------------------------------------------------------------
-  def teleport
-    return if @selected_location.known==false && CN_WorldMapWarp::Config::TELEPORT_FOR_ALL==false
+  def teleport_player
+    return false if @selected_location.known==false && CN_WorldMapWarp::Config::TELEPORT_FOR_ALL==false
+    return false if @selected_location.teleport == false
     if @selected_location.map_id == $game_wmw.prev_map
       move_player
     else
@@ -398,6 +410,7 @@ class Window_Map < Window_Command
       @selected_location.entry_y,
       @selected_location.direction)
     end
+    return true
   end
   
   #--------------------------------------------------------------------------
@@ -567,8 +580,11 @@ class Window_MapLocations < Window_Selectable
     if @data[index]
       if @data[index].known==false && CN_WorldMapWarp::Config::TELEPORT_FOR_ALL==false
         return false
+      elsif !@data[index].teleport
+        return false
+      else
+        return true
       end
-      return true
     end
   end
 
@@ -707,7 +723,7 @@ class Scene_WorldMap < Scene_MenuBase
     Graphics.fadeout(CN_WorldMapWarp::Config::TELEPORT_FADE_TIME)    
     @mapwarp_window.call_handler(:cancel) if SceneManager.scene_is?(Scene_WorldMap)
     SceneManager.scene().return_scene if SceneManager.scene_is?(Scene_Menu)
-    @mapwarp_window.teleport
+    return unless @mapwarp_window.teleport_player
     $scene = Scene_Map.new
   end
 end
@@ -759,6 +775,7 @@ class Location
 		entry_coords=[nil,nil],
 		icon_coords=[-1,-1],
 		location_known=nil,
+    teleport=true,
 		custom_icons = [nil, nil])
 
 	@name = name
@@ -772,6 +789,7 @@ class Location
 	@icon_index = @deselected_icon
 	@deselected_icon = custom_icons[0]
 	@selected_icon = custom_icons[1]
+  @teleport = teleport
   
   @known = CN_WorldMapWarp::Config::DEFAULT_KNOWN if @known.nil?
   @direction = CN_WorldMapWarp::Config::DEFAULT_DIRECTION if @direction==0
@@ -791,6 +809,7 @@ class Location
   attr_accessor :icon_index
   attr_accessor :description
   attr_accessor :description_real
+  attr_accessor :teleport
   
   def description=(text)
       @description_real = @description = text      
