@@ -377,22 +377,23 @@ class Window_Map < Window_Command
     Sound.play_cancel
 
     # find the opposite direction
-    opp_direction = case $game_player.direction
-    when 2
-      8 # down -> up
-    when 4
-      6 # left -> right
-    when 6
-      4 # right -> left
-    when 8
-      2 # up -> down
+    x = $game_player.x
+    y = $game_player.y
+   
+    if x == 0
+      opp_direction = 6
+    elsif x >= $game_map.width-1
+      opp_direction = 4
+    elsif y == 0
+      opp_direction = 2
+    elsif y >= $game_map.height-1
+      opp_direction = 8
+    else
+      opp_direction = $game_player.direction
     end
-
+    
     # turn the player round and exit
-    player_transition($game_wmw.prev_map,
-    $game_player.x,
-    $game_player.y,
-    opp_direction)
+		$game_player.set_direction(opp_direction)
   end
   
 	#--------------------------------------------------------------------------
