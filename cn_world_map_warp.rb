@@ -699,7 +699,8 @@ class Scene_WorldMap < Scene_MenuBase
     wh = Graphics.height - wy
     @mapwarp_window = Window_Map.new(wh)
     @mapwarp_window.viewport = @viewport
-    @mapwarp_window.set_handler(:cancel, method(:return_scene))
+    @mapwarp_window.set_handler(:cancel, method(:return_scene)) if CN_WorldMapWarp::Config::IN_MENU
+    @mapwarp_window.set_handler(:quit, method(:return_scene)) unless CN_WorldMapWarp::Config::IN_MENU
     
     @mapwarp_window.location_window = @location_window
     @mapwarp_window.help_window = @help_window
@@ -722,7 +723,8 @@ class Scene_WorldMap < Scene_MenuBase
   #--------------------------------------------------------------------------
   def on_location_ok
     Graphics.fadeout(CN_WorldMapWarp::Config::TELEPORT_FADE_TIME)    
-    @mapwarp_window.call_handler(:cancel) if SceneManager.scene_is?(Scene_WorldMap)
+    @mapwarp_window.call_handler(:cancel) if SceneManager.scene_is?(Scene_WorldMap) && CN_WorldMapWarp::Config::IN_MENU
+    @mapwarp_window.call_handler(:quit) if SceneManager.scene_is?(Scene_WorldMap) && !CN_WorldMapWarp::Config::IN_MENU
     SceneManager.scene().return_scene if SceneManager.scene_is?(Scene_Menu)
     return unless @mapwarp_window.teleport_player
     $scene = Scene_Map.new
