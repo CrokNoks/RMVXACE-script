@@ -186,11 +186,20 @@ class  Game_WMW
   end 
   
 	#--------------------------------------------------------------------------
-  # * Set known value for id
+  # * Set teleport value for id
 	#--------------------------------------------------------------------------
   def teleport(map_id,teleport)
     item = get(map_id)
     item.teleport = teleport unless item.nil?
+  end
+  
+  #--------------------------------------------------------------------------
+  # * Get teleport value for all map
+	#--------------------------------------------------------------------------
+  def teleport_for_all(teleport)
+    @maplocations.each do |item|
+      teleport(item.map_id,teleport)
+    end
   end
   
 	#--------------------------------------------------------------------------
